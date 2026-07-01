@@ -37,9 +37,35 @@ The application integrates a Large Language Model (LLM) through the OpenRouter A
 
 ---
 
-## 📷 Screenshots
+## 📷 Application Preview
 
-> *Screenshots will be added soon.*
+### Home Page
+
+![Home Page](assets/home.png)
+
+---
+
+### Account Login & Registration
+
+![Login and Registration](assets/login.png)
+
+---
+
+### Quick Calorie Calculator
+
+![Calorie Calculator](assets/calorie-calculator.png)
+
+---
+
+### Generated 14-Day Plan
+
+![Generated Plan](assets/generated-plan.png)
+
+---
+
+### Coach Chat & Plan Refinement
+
+![Coach Chat](assets/coach-chat.png)
 
 ---
 
