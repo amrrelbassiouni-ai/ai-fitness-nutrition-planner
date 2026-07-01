@@ -29,12 +29,12 @@ The application integrates a Large Language Model (LLM) through the OpenRouter A
 | Category | Technologies |
 |----------|--------------|
 | Backend | Python, Flask |
-| AI Integration | OpenRouter API (LLM) |
+| AI Integration | OpenRouter API, Large Language Model (LLM) |
+| Data Format | JSON schema, structured AI output |
 | Database | SQLite |
-| PDF Generation | ReportLab |
+| PDF Generation | JSON-to-PDF conversion, ReportLab |
 | Frontend | HTML, CSS |
 | Version Control | Git, GitHub |
-
 ---
 
 ## 📷 Application Preview
