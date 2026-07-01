@@ -1,0 +1,18 @@
+# Web Framework
+flask
+
+# API Communication
+requests
+
+# Environment Variable Management
+python-dotenv
+
+# Excel Database Support
+pandas
+openpyxl
+
+# PDF Generation
+reportlab
+
+# Utility (optional, usually built-in)
+werkzeug

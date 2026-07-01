@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{{ plan_title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container brand">
+      <div class="logo">PT</div>
+      <div>
+        <h1>Your Personalised Plan</h1>
+        <p class="muted">{{ plan_title }}</p>
+      </div>
+      <div class="spacer"></div>
+      <a class="link" href="{{ url_for('history') }}">My plans</a>
+      <a class="link" href="{{ url_for('index') }}" style="margin-left:16px;">New plan</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <div class="badge">Plan generated successfully</div>
+          <h2 style="margin-top:12px;">Your plan is ready</h2>
+          <p class="muted">This page is your full HTML version of the generated plan. You can review everything here, request changes, or download the PDFs.</p>
+        </div>
+      </div>
+
+      {% if targets %}
+      <div class="macros">
+        <div class="macro">
+          <span class="label">Daily Calories</span>
+          <span class="value">{{ targets.daily_calories }}</span>
+        </div>
+        <div class="macro">
+          <span class="label">Protein</span>
+          <span class="value">{{ targets.protein_g }} g</span>
+        </div>
+        <div class="macro">
+          <span class="label">Carbohydrates</span>
+          <span class="value">{{ targets.carbs_g }} g</span>
+        </div>
+        <div class="macro">
+          <span class="label">Fat</span>
+          <span class="value">{{ targets.fat_g }} g</span>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="actions" style="margin-top:18px;">
+        <a class="btn" href="{{ url_for('download', filename=pdf_nutrition_file) }}">Download Nutrition PDF</a>
+        <a class="btn btn-secondary" href="{{ url_for('download', filename=pdf_workout_file) }}">Download Workout PDF</a>
+      </div>
+    </section>
+
+    {% if plan %}
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <h2>Your Nutrition Plan</h2>
+        </div>
+      </div>
+
+      {% for week_key, days in plan["nutrition_plan"].items() %}
+        <details class="preview-box" style="margin-bottom:18px;" {% if loop.first %}open{% endif %}>
+          <summary style="cursor:pointer; font-weight:700; font-size:1.05rem;">
+            {{ week_key.replace("_", " ").title() }}
+          </summary>
+
+          <div style="margin-top:14px;">
+            {% for day_key, meals in days.items() %}
+              <div class="preview-box" style="margin-bottom:14px; background: rgba(255,255,255,0.02);">
+                <h3>{{ day_key.replace("_", " ").title() }}</h3>
+
+                <div class="preview-grid">
+                  <div class="preview-box">
+                    <h3>Breakfast</h3>
+                    {% for item in meals["breakfast"]["main"] %}
+                      <p>{{ item["name"] }} — <span class="muted">{{ item["amount"] }}</span></p>
+                    {% endfor %}
+                  </div>
+
+                  <div class="preview-box">
+                    <h3>Lunch</h3>
+                    {% for item in meals["lunch"]["main"] %}
+                      <p>{{ item["name"] }} — <span class="muted">{{ item["amount"] }}</span></p>
+                    {% endfor %}
+                  </div>
+
+                  <div class="preview-box">
+                    <h3>Dinner</h3>
+                    {% for item in meals["dinner"]["main"] %}
+                      <p>{{ item["name"] }} — <span class="muted">{{ item["amount"] }}</span></p>
+                    {% endfor %}
+                  </div>
+
+                  <div class="preview-box">
+                    <h3>Snacks</h3>
+                    {% for item in meals["snacks"]["main"] %}
+                      <p>{{ item["name"] }} — <span class="muted">{{ item["amount"] }}</span></p>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </details>
+      {% endfor %}
+
+      {% if plan["nutrition_progression"] %}
+      <div class="preview-box" style="margin-top:14px;">
+        <h3>Nutrition Progression</h3>
+        <p class="muted">{{ plan["nutrition_progression"]["overview"] }}</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <h2>Your Training Plan</h2>
+        </div>
+      </div>
+
+      {% for week_key, days in plan["training_plan"].items() %}
+        <details class="preview-box" style="margin-bottom:18px;" {% if loop.first %}open{% endif %}>
+          <summary style="cursor:pointer; font-weight:700; font-size:1.05rem;">
+            {{ week_key.replace("_", " ").title() }}
+          </summary>
+
+          <div style="margin-top:14px;">
+            {% for day_key, day in days.items() %}
+              <div class="preview-box" style="margin-bottom:14px; background: rgba(255,255,255,0.02);">
+                <h3>{{ day_key.replace("_", " ").title() }}</h3>
+
+                <p><strong>Focus:</strong> <span class="muted">{{ day["focus"] }}</span></p>
+
+                {% if day["warmup"] %}
+                <div class="divider"></div>
+                <p><strong>Warm-up:</strong></p>
+                {% for item in day["warmup"] %}
+                  <p class="muted">
+                    •
+                    <a
+                      href="https://www.youtube.com/results?search_query={{ item|replace(' ', '+') }}+exercise+tutorial"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="link"
+                    >
+                      {{ item }}
+                    </a>
+                  </p>
+                {% endfor %}
+                {% endif %}
+
+                {% if day["exercises"] %}
+                <div class="divider"></div>
+                <p><strong>Exercises:</strong></p>
+                {% for ex in day["exercises"] %}
+                  <p>
+                    <a
+                      href="https://www.youtube.com/results?search_query={{ ex['name']|replace(' ', '+') }}+exercise+tutorial"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="link"
+                    >
+                      {{ ex["name"] }}
+                    </a>
+                    —
+                    <span class="muted">{{ ex["sets"] }} sets · {{ ex["reps"] }} reps · rest {{ ex["rest"] }}</span>
+                  </p>
+                {% endfor %}
+                {% endif %}
+
+                {% if day["finisher"] %}
+                <div class="divider"></div>
+                <p><strong>Finisher:</strong></p>
+                {% for item in day["finisher"] %}
+                  <p class="muted">
+                    •
+                    <a
+                      href="https://www.youtube.com/results?search_query={{ item|replace(' ', '+') }}+exercise+tutorial"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="link"
+                    >
+                      {{ item }}
+                    </a>
+                  </p>
+                {% endfor %}
+                {% endif %}
+
+                {% if day["notes"] %}
+                <div class="divider"></div>
+                <p><strong>Notes:</strong> <span class="muted">{{ day["notes"] }}</span></p>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </details>
+      {% endfor %}
+    </section>
+
+    <section class="page-grid">
+      <div class="stack">
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <h2>Lifestyle & Recovery</h2>
+              <p class="muted">Supporting guidance generated with the plan.</p>
+            </div>
+          </div>
+
+          <div class="preview-box">
+            <p><strong>Sleep:</strong> <span class="muted">{{ plan["lifestyle_and_recovery"]["sleep"] }}</span></p>
+            <div class="divider"></div>
+            <p><strong>Stress management:</strong> <span class="muted">{{ plan["lifestyle_and_recovery"]["stress_management"] }}</span></p>
+            <div class="divider"></div>
+            <p><strong>Consistency tips:</strong> <span class="muted">{{ plan["lifestyle_and_recovery"]["consistency_tips"] }}</span></p>
+          </div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <h2>Training Guidance</h2>
+              <p class="muted">High-level overview of the training structure.</p>
+            </div>
+          </div>
+
+          <div class="preview-box">
+            <p><strong>Frequency per week:</strong> <span class="muted">{{ plan["training_guidance"]["frequency_per_week"] }}</span></p>
+            <div class="divider"></div>
+            <p><strong>Weekly structure:</strong> <span class="muted">{{ plan["training_guidance"]["weekly_structure"] }}</span></p>
+
+            {% if plan["training_guidance"]["training_types"] %}
+            <div class="divider"></div>
+            <p><strong>Training types:</strong></p>
+            {% for item in plan["training_guidance"]["training_types"] %}
+              <p class="muted">• {{ item }}</p>
+            {% endfor %}
+            {% endif %}
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <h2>Coach Chat</h2>
+          <p class="muted">Request changes and regenerate the plan while keeping the session context.</p>
+        </div>
+      </div>
+
+      <div class="chat-box">
+        {% if chat_history %}
+          {% for msg in chat_history %}
+            <div class="chat-message {{ msg.role }}">
+              <div class="chat-role">
+                {% if msg.role == "user" %}You{% else %}Coach{% endif %}
+              </div>
+              <div class="chat-text">{{ msg.message }}</div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="muted small">No chat history yet.</p>
+        {% endif %}
+      </div>
+
+      <form class="form" id="reviseForm" action="{{ url_for('revise', plan_id=plan_id) }}" method="post">
+        <label for="revision_request">Ask for changes</label>
+        <textarea
+          id="revision_request"
+          name="revision_request"
+          rows="4"
+          required
+          placeholder="Examples:
+- Replace quinoa with rice
+- Remove eggs and dairy
+- Make the workouts more intense
+- Increase protein by 20g per day"></textarea>
+
+        <div class="actions">
+          <button class="btn" type="submit" id="reviseBtn">Update my plan</button>
+          <span class="muted small">This regenerates the plan and keeps the chat flow.</span>
+        </div>
+      </form>
+    </section>
+    {% endif %}
+  </main>
+
+  <footer class="footer">
+    <div class="container muted small">Making your goals happen — one plan at a time.</div>
+  </footer>
+
+  <script>
+    const reviseForm = document.getElementById("reviseForm");
+    const reviseBtn = document.getElementById("reviseBtn");
+
+    if (reviseForm && reviseBtn) {
+      reviseForm.onsubmit = function() {
+        reviseBtn.innerHTML = "Updating Plan...";
+        reviseBtn.disabled = true;
+        reviseBtn.style.opacity = "0.7";
+      };
+    }
+  </script>
+</body>
+</html>

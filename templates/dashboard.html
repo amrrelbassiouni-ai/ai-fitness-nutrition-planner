@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard - AI Personal Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .top-links .nav-pill {
+      font-size: 0.95rem;
+    }
+
+    .nav-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      transition: 0.2s ease;
+    }
+
+    .nav-pill:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .dashboard-actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mini-card {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mini-card h3 {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container brand">
+    <div class="logo">PT</div>
+    <div>
+      <h1>AI Personal Trainer</h1>
+      <p class="muted">Manage your account and saved profile.</p>
+    </div>
+    <div class="spacer"></div>
+
+    <div class="top-links">
+      <a class="nav-pill" href="{{ url_for('index') }}">Home</a>
+      <a class="nav-pill" href="{{ url_for('history') }}">Saved Plans</a>
+
+      {% if session.get('is_admin') %}
+        <a class="nav-pill" href="{{ url_for('admin_users') }}">Admin Panel</a>
+      {% endif %}
+
+      <a class="nav-pill" href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </div>
+</header>
+
+<main class="container" style="padding-top: 30px; max-width: 900px;">
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert" style="background:#133320;border-color:#2e8b57;color:#d6ffe8">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <section class="hero-card">
+    <h2>Your Dashboard</h2>
+    <p class="muted">
+      Welcome, {{ session['username'] }}. Update your profile details and quickly access your saved plans from here.
+    </p>
+
+    <div class="dashboard-actions">
+      <a class="btn" href="{{ url_for('history') }}" style="text-decoration:none;">View Saved Plans</a>
+      <a class="btn" href="{{ url_for('index') }}" style="text-decoration:none;">Create New Plan</a>
+    </div>
+
+    <div class="mini-card">
+      <h3>Quick Access</h3>
+      <p class="muted" style="margin-bottom: 0;">
+        Your profile is used to personalise future plans automatically. Your saved plans remain available from the button above.
+      </p>
+    </div>
+
+    <div class="preview-box" style="margin-top:20px;">
+      <h3 style="margin-bottom: 15px;">Saved Profile</h3>
+
+      <form class="form" action="{{ url_for('save_profile') }}" method="post">
+        <label for="age">Age</label>
+        <input
+          type="number"
+          id="age"
+          name="age"
+          placeholder="Age"
+          value="{{ user_profile['age'] if user_profile and user_profile['age'] is not none else '' }}"
+        >
+
+        <label for="height_unit">Height</label>
+        <select id="height_unit" name="height_unit" onchange="toggleHeightInputs()">
+          <option value="cm" selected>cm</option>
+          <option value="ft_in">ft/in</option>
+        </select>
+
+        <div id="height-cm-group">
+          <input
+            type="text"
+            id="height_cm_value"
+            name="height_cm_value"
+            placeholder="Enter height in cm, e.g. 178"
+          >
+        </div>
+
+        <div id="height-ftin-group" class="preview-grid" style="display:none;">
+          <div class="preview-box">
+            <label for="height_feet">Feet</label>
+            <input
+              type="number"
+              id="height_feet"
+              name="height_feet"
+              placeholder="e.g. 5"
+            >
+          </div>
+
+          <div class="preview-box">
+            <label for="height_inches">Inches</label>
+            <input
+              type="number"
+              id="height_inches"
+              name="height_inches"
+              placeholder="e.g. 10"
+            >
+          </div>
+        </div>
+
+        <p class="muted small">
+          Saved metric height:
+          {% if user_profile and user_profile['height'] is not none %}
+            {{ user_profile['height'] }} cm
+          {% else %}
+            not set
+          {% endif %}
+        </p>
+
+        <label for="weight_unit">Weight</label>
+        <select id="weight_unit" name="weight_unit" onchange="toggleWeightPlaceholder()">
+          <option value="kg" selected>kg</option>
+          <option value="lbs">lbs</option>
+        </select>
+
+        <input
+          type="text"
+          id="weight_value"
+          name="weight_value"
+          placeholder="Enter weight in kg, e.g. 75"
+        >
+
+        <p class="muted small">
+          Saved metric weight:
+          {% if user_profile and user_profile['weight'] is not none %}
+            {{ user_profile['weight'] }} kg
+          {% else %}
+            not set
+          {% endif %}
+        </p>
+
+        <label for="goal">Goal</label>
+        <input
+          type="text"
+          id="goal"
+          name="goal"
+          placeholder="Goal"
+          value="{{ user_profile['goal'] if user_profile and user_profile['goal'] else '' }}"
+        >
+
+        <label for="diet">Diet preference</label>
+        <input
+          type="text"
+          id="diet"
+          name="diet"
+          placeholder="Diet preference"
+          value="{{ user_profile['diet'] if user_profile and user_profile['diet'] else '' }}"
+        >
+
+        <label for="allergies">Allergies</label>
+        <input
+          type="text"
+          id="allergies"
+          name="allergies"
+          placeholder="Allergies"
+          value="{{ user_profile['allergies'] if user_profile and user_profile['allergies'] else '' }}"
+        >
+
+        <button class="btn" type="submit" style="margin-top: 10px;">Save Profile</button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  function toggleHeightInputs() {
+    const unit = document.getElementById("height_unit").value;
+    const cmGroup = document.getElementById("height-cm-group");
+    const ftInGroup = document.getElementById("height-ftin-group");
+
+    if (unit === "cm") {
+      cmGroup.style.display = "block";
+      ftInGroup.style.display = "none";
+    } else {
+      cmGroup.style.display = "none";
+      ftInGroup.style.display = "grid";
+    }
+  }
+
+  function toggleWeightPlaceholder() {
+    const unit = document.getElementById("weight_unit").value;
+    const weightInput = document.getElementById("weight_value");
+
+    if (unit === "kg") {
+      weightInput.placeholder = "Enter weight in kg, e.g. 75";
+    } else {
+      weightInput.placeholder = "Enter weight in lbs, e.g. 165";
+    }
+  }
+
+  toggleHeightInputs();
+  toggleWeightPlaceholder();
+</script>
+
+</body>
+</html>

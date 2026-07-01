@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>My Plans</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="container brand">
+    <div class="logo">PT</div>
+    <div>
+      <h1>My Plans</h1>
+      <p class="muted">View, reopen, or delete your previous plans and revisions.</p>
+    </div>
+    <div class="spacer"></div>
+    <a class="link" href="{{ url_for('dashboard') }}" style="margin-right:15px;">Dashboard</a>
+    <a class="link" href="{{ url_for('index') }}">Home</a>
+  </div>
+</header>
+
+<main class="container">
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert" style="background:#133320;border-color:#2e8b57;color:#d6ffe8;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <section class="card">
+    <div class="section-head">
+      <div>
+        <h2>{{ username }}'s Saved Plans</h2>
+        <p class="muted">Each generated or revised plan is saved as its own version, with the newest shown first.</p>
+      </div>
+    </div>
+
+    {% if rows %}
+      <div class="history-list">
+        {% for row in rows %}
+          {% set row_plan_id = row.get("plan_id", row.get("Plan_ID")) %}
+          {% set row_title = row.get("title", row.get("Plan_Title", "Untitled Plan")) %}
+          {% set row_created = row.get("created_at", row.get("Timestamp")) %}
+          {% set row_version = row.get("version", row.get("Version")) %}
+          {% set row_calories = row.get("daily_calories", row.get("Daily_Calories")) %}
+          {% set row_protein = row.get("protein_g", row.get("Protein_g")) %}
+          {% set row_carbs = row.get("carbs_g", row.get("Carbs_g")) %}
+          {% set row_fat = row.get("fat_g", row.get("Fat_g")) %}
+          {% set row_revision = row.get("revision_request", row.get("Revision_Request")) %}
+
+          <div class="history-item">
+            <h3>{{ row_title }}</h3>
+
+            <p class="muted small">
+              {% if row_created %}Generated: {{ row_created }}{% endif %}
+              {% if row_version %} • Version {{ row_version }}{% endif %}
+            </p>
+
+            {% if row_revision %}
+              <p class="muted small" style="margin-top:6px;">
+                Revision request: {{ row_revision }}
+              </p>
+            {% else %}
+              <p class="muted small" style="margin-top:6px;">
+                Original generated plan
+              </p>
+            {% endif %}
+
+            {% if row_calories or row_protein or row_carbs or row_fat %}
+              <div class="stat-row">
+                <div class="stat-card">
+                  <span class="muted small">Calories</span>
+                  <p>{{ row_calories or "-" }}</p>
+                </div>
+                <div class="stat-card">
+                  <span class="muted small">Protein</span>
+                  <p>{{ row_protein or "-" }} g</p>
+                </div>
+                <div class="stat-card">
+                  <span class="muted small">Carbs / Fat</span>
+                  <p>{{ row_carbs or "-" }} g / {{ row_fat or "-" }} g</p>
+                </div>
+              </div>
+            {% endif %}
+
+            {% if row_plan_id %}
+              <div class="actions" style="margin-top:14px;">
+                <a class="btn" href="{{ url_for('open_saved_plan', plan_id=row_plan_id) }}">Open Plan</a>
+
+                <form action="{{ url_for('delete_plan', plan_id=row_plan_id) }}" method="post" style="display:inline;">
+                  <button class="btn btn-secondary" type="submit" onclick="return confirm('Delete this saved plan?')">
+                    Delete
+                  </button>
+                </form>
+              </div>
+            {% else %}
+              <div class="alert" style="margin-top:14px;">
+                This saved row is missing a plan ID.
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="preview-box">
+        <p class="muted">No saved plans yet.</p>
+      </div>
+    {% endif %}
+  </section>
+
+</main>
+
+</body>
+</html>

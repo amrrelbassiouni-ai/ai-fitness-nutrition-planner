@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AI Personal Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+    }
+
+    .modal-content {
+      background-color: #1a1a1a;
+      margin: 10% auto;
+      padding: 30px;
+      border: 1px solid #333;
+      width: 90%;
+      max-width: 420px;
+      border-radius: 8px;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background: #333;
+      border: 1px solid #444;
+      color: white;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .top-links .link,
+    .top-links .nav-pill {
+      font-size: 0.95rem;
+      line-height: 1;
+    }
+
+    .nav-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      transition: 0.2s ease;
+    }
+
+    .nav-pill:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .user-tag {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+  </style>
+</head>
+<body data-open-modal="{{ 'true' if error else 'false' }}">
+
+  <header class="topbar">
+    <div class="container brand">
+      <div class="logo">PT</div>
+
+      <div>
+        <h1>AI Personal Trainer</h1>
+        <p class="muted">Your personalised nutrition + training plan in seconds.</p>
+      </div>
+
+      <div class="spacer"></div>
+
+      {% if session.get('username') %}
+        <div class="top-links">
+          <span class="muted user-tag">Signed in as <strong>{{ session['username'] }}</strong></span>
+
+          <a class="nav-pill" href="{{ url_for('dashboard') }}">
+            Profile
+          </a>
+
+          {% if session.get('is_admin') %}
+            <a class="nav-pill" href="{{ url_for('admin_users') }}">
+              Admin Panel
+            </a>
+          {% endif %}
+
+          <a class="nav-pill" href="{{ url_for('logout') }}">
+            Logout
+          </a>
+        </div>
+      {% else %}
+        <a class="nav-pill" href="javascript:void(0)" onclick="openModal()">Log in</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+
+      <h2>Account</h2>
+      <p class="muted small">Create an account or log in to save your plans and profile.</p>
+
+      <div style="margin-top:20px;">
+        <h3 style="margin-bottom:10px;">Log In</h3>
+        <form class="login-form" action="{{ url_for('login') }}" method="post">
+          <input type="text" name="username" placeholder="Username" required>
+          <input type="password" name="password" placeholder="Password" required>
+          <button class="btn" type="submit" style="width:100%;">Log In</button>
+        </form>
+      </div>
+
+      <hr style="margin:25px 0;border:0;border-top:1px solid #333;">
+
+      <div>
+        <h3 style="margin-bottom:10px;">Register</h3>
+        <form class="login-form" action="{{ url_for('register') }}" method="post">
+          <input type="text" name="username" placeholder="Username" required>
+          <input type="email" name="email" placeholder="Email" required>
+          <input type="password" name="password" placeholder="Password" required>
+          <input type="password" name="confirm_password" placeholder="Confirm password" required>
+          <button class="btn" type="submit" style="width:100%;">Create Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-card">
+        <h2>Let’s build your plan</h2>
+
+        {% if not session.get('username') %}
+          <div class="alert" style="background:#2c1f00;border-color:#d4a017;color:#ffcc00;">
+            Tip: Log in first to save your plans to your profile.
+          </div>
+        {% endif %}
+
+        <p class="muted">
+          Create a personalised 14-day nutrition and training plan tailored to your goals, preferences, and routine.
+        </p>
+
+        {% if error %}
+          <div class="alert">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+          <div class="alert" style="background:#133320;border-color:#2e8b57;color:#d6ffe8;">
+            {{ success }}
+          </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert" style="background:#133320;border-color:#2e8b57;color:#d6ffe8;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form class="form" id="planForm" action="{{ url_for('generate') }}" method="post">
+          <label for="user_text">
+            {% if session.get('user_id') %}
+              Extra instructions for this plan
+            {% else %}
+              Your details
+            {% endif %}
+          </label>
+
+          <p class="muted small" style="margin-bottom:8px;">
+            {% if session.get('user_id') %}
+              Your saved profile will be used automatically. Add only the preferences, schedule, equipment, or changes you want for this plan.
+            {% else %}
+              Enter your key details so the system can generate a personalised plan.
+            {% endif %}
+          </p>
+
+          <textarea
+            id="user_text"
+            name="user_text"
+            rows="8"
+            {% if not session.get('user_id') %}required{% endif %}
+            placeholder="{% if session.get('user_id') %}
+Examples:
+
+Train 4 days per week
+Prefer quick breakfasts
+Keep meals affordable
+Avoid repetitive dinners
+Home workouts only if possible
+
+You can also override your saved goal here, for example:
+I want to do a lean bulk instead of fat loss
+{% else %}
+Examples:
+
+Age: 25
+Height: 175 cm
+Weight: 78 kg
+Goal: Fat loss
+Training: 4 days/week
+Diet: high-protein
+Allergies: none
+{% endif %}"></textarea>
+
+          <div class="actions">
+            <button class="btn" type="submit" id="submitBtn">Generate my plan</button>
+            <span class="muted small" id="statusText">Takes ~30–60 seconds</span>
+          </div>
+
+          {% if session.get('user_id') %}
+            <div style="margin-top:14px;">
+              <a class="btn" href="{{ url_for('history') }}" style="display:inline-block; text-decoration:none;">
+                View Saved Plans
+              </a>
+            </div>
+          {% endif %}
+        </form>
+      </div>
+
+      <div class="hero-image" aria-hidden="true">
+        <div class="image-overlay">
+          <h3>Coach Mode</h3>
+          <p class="muted">Structured plan • Macros • Progress guidance</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <h2>Quick Calorie Calculator</h2>
+          <p class="muted">Estimate your maintenance calories before generating a plan.</p>
+        </div>
+      </div>
+
+      <div class="preview-grid">
+        <div class="preview-box">
+          <label for="calc-sex">Sex</label>
+          <select id="calc-sex">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+
+        <div class="preview-box">
+          <label for="calc-age">Age</label>
+          <input type="number" id="calc-age" placeholder="e.g. 21">
+        </div>
+
+        <div class="preview-box">
+          <label for="calc-weight">Weight (kg)</label>
+          <input type="number" id="calc-weight" placeholder="e.g. 75">
+        </div>
+
+        <div class="preview-box">
+          <label for="calc-height">Height (cm)</label>
+          <input type="number" id="calc-height" placeholder="e.g. 178">
+        </div>
+
+        <div class="preview-box">
+          <label for="calc-activity">Activity Level</label>
+          <select id="calc-activity">
+            <option value="1.2">Sedentary</option>
+            <option value="1.375">Lightly active</option>
+            <option value="1.55">Moderately active</option>
+            <option value="1.725">Very active</option>
+          </select>
+        </div>
+
+        <div class="preview-box" style="display:flex;align-items:end;">
+          <button class="btn" type="button" onclick="calculateCalories()" style="width:100%;">
+            Calculate
+          </button>
+        </div>
+      </div>
+
+      <div class="preview-box" style="margin-top:14px;">
+        <p><strong>Estimated maintenance calories:</strong> <span id="calc-maintenance" class="muted">-</span></p>
+        <div class="divider"></div>
+        <p><strong>Suggested fat loss calories:</strong> <span id="calc-cut" class="muted">-</span></p>
+        <div class="divider"></div>
+        <p><strong>Suggested lean bulk calories:</strong> <span id="calc-bulk" class="muted">-</span></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const modal = document.getElementById("loginModal");
+
+    function openModal() {
+      modal.style.display = "block";
+    }
+
+    function closeModal() {
+      modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+      if (event.target === modal) {
+        closeModal();
+      }
+    };
+
+    const form = document.getElementById("planForm");
+    const btn = document.getElementById("submitBtn");
+    const status = document.getElementById("statusText");
+
+    if (form) {
+      form.onsubmit = function() {
+        btn.innerHTML = "Creating Plan...";
+        btn.style.opacity = "0.7";
+        btn.disabled = true;
+        status.innerHTML = "AI is thinking... please don't refresh.";
+      };
+    }
+
+    function calculateCalories() {
+      const sex = document.getElementById("calc-sex").value;
+      const age = parseFloat(document.getElementById("calc-age").value);
+      const weight = parseFloat(document.getElementById("calc-weight").value);
+      const height = parseFloat(document.getElementById("calc-height").value);
+      const activity = parseFloat(document.getElementById("calc-activity").value);
+
+      if (!age || !weight || !height || !activity) {
+        document.getElementById("calc-maintenance").innerText = "Please fill in all fields";
+        document.getElementById("calc-cut").innerText = "-";
+        document.getElementById("calc-bulk").innerText = "-";
+        return;
+      }
+
+      let bmr;
+      if (sex === "male") {
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+      } else {
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+      }
+
+      const maintenance = Math.round(bmr * activity);
+      const cut = Math.round(maintenance - 300);
+      const bulk = Math.round(maintenance + 250);
+
+      document.getElementById("calc-maintenance").innerText = maintenance + " kcal/day";
+      document.getElementById("calc-cut").innerText = cut + " kcal/day";
+      document.getElementById("calc-bulk").innerText = bulk + " kcal/day";
+    }
+
+    const shouldOpenModal = document.body.dataset.openModal;
+    if (shouldOpenModal === "true") {
+      openModal();
+    }
+  </script>
+
+</body>
+</html>
